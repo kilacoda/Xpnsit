@@ -6,8 +6,8 @@
 4. E-mail - Optional. Can be used for login
 5. First Name
 6. Last Name
-
-## Tables required:
+     
+## Raghav - Tables required:
 
 1. Users
 2. data tables for each user, containing their info of expenditures and incomes and all that stuff
