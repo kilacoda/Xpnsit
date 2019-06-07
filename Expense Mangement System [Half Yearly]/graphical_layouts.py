@@ -30,9 +30,9 @@ class LoginFrame(Frame):
     def __init__(self, master):
         # super().__init__(master)
         Frame.__init__(self, master)
-        master.title('Xpnsit v0.1')
-        master.resizable(width = 0, height = 0)
-        self.entry_label = Label(self,text = "Welcome to Xpnsit, the best way to manage your expenses! To begin, login or signup below")
+        master.title('Test App')
+        master.resizable(width = 1, height = 1)
+        self.entry_label = Label(self,text = "Just some random text")
         self.label_username = Label(self, text="Username")
         self.label_password = Label(self, text="Password")
 
@@ -54,7 +54,7 @@ class LoginFrame(Frame):
         self.checkbox = Checkbutton(self, text="Keep me logged in")
         self.checkbox.grid(columnspan=3)
 
-        
+
         self.logbtn = Button(self, text="Login", command= lambda : [self._login_btn_clicked, Xpnsit.switch_frame(Dashboard)])
         self.logbtn.grid(columnspan=3)
 
