@@ -1,0 +1,1 @@
+sg.Spin([i for i in range(0, 1000000)], initial_value='0', key='whole'), sg.T('.'),sg.Spin([a for a in range (00,100)], key = 'deci', initial_value=00)
