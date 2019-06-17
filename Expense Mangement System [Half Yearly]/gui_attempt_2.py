@@ -54,7 +54,6 @@ login_window = sg.Window('Xpnsit v0.1').Layout(layout)
 i = 0
 
 while True:
-    # signup.Hide()
     if not dash_active:
         event, values = login_window.Read(timeout=100)
 
@@ -69,7 +68,7 @@ while True:
             signup.UnHide()
             login_window.Hide()
             try:
-                butt_event_signup , sign_details = signup.Read()
+                butt_event_signup, sign_details = signup.Read()
                 print(butt_event_signup, sign_details)
             except:
                 continue
@@ -91,9 +90,16 @@ while True:
                 else:
                     pass
 
-                for a in sign_details.values():
-                    if a == ''
-                    sg.PopupError('Please fill required fields')
+                for (key, value) in sign_details.items():
+                    if value == '' and (key != 'email'):
+                        sg.PopupError('Please fill required fields')
+                    elif key == 'pass_conf':
+                        if value != sign_details['pass']:
+                            sg.PopupError("Passwords don't match")
+                            break
+                        else:
+                            pass
+
                 sign_dets = []
                 dets = ''
                 for key, value in sign_details.items():
