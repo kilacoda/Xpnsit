@@ -2,7 +2,11 @@ from __init__ import *
 from login import login_cursor
 import PySimpleGUI as sg
 from datetime import datetime
+'''
+ NOTE (25-06-2019; 00:30): Use the layout from the multi_window.py file and modify it to the application's requirement. The thing is, that's working.
+ And I think one of the major causes for my crashes is that I just haven't implemented it properly (e.g. the timeouts for the second ('Signup') window and the active flags). So, I'll try to get this up and running in about a week or so, if I'm lucky. Wish me luck! Also, don't worry, Raghav, it'll work eventually, and you're going to be smashing others projects in the face in the end. Believe in yourself. I'll go to sleep now, its 00:40. I'll have another go at this in the morning.
 
+'''
 
 def check_of_existence_of(username):
     name_check = conn.cursor()
