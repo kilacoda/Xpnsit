@@ -7,6 +7,11 @@ dbcredentials = {'host': 'localhost', 'password': 'bIgnInja349', 'user': 'root',
 conn = mysqlconnect.MySQLConnection(**dbcredentials)
 
 
+'''
+TODO: Create the database and required tables if they don't exist. This'll be required for systems other than my local one. 
+'''
+# db_connection_cursor = conn.cursor()
+# db_connection_cursor.execute('create database if not exists')
 
 
 

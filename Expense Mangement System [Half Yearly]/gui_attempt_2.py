@@ -12,9 +12,15 @@ def check_of_existence_of(username):
     name_check = conn.cursor()
     name_check.execute(f"select username from users;")
     if (username) in name_check.fetchall():
-        return 1
+        return False
     else:
-        return 0
+        return True
+
+def show_status_of(var):
+        if var is signup_active:
+            print(f"Signup Active = {signup_active}")
+        elif var is dash_active:
+            print(f"Dashboard Active = {dash_a}")
 
 user_fields = '(username,passwd,email_id,first_name,last_name)'
 # login_window = sg.Window('Xpnsit v0.1')
@@ -27,21 +33,10 @@ notebookActive = False
 analyticsActive = False
 historyActive = False
 dash_active = False
-# signup_active = False
+signup_active = False
 
 ####################################################### Login Area #################################################################
-signup_layout = [
-                [sg.Text('Signup',justification='center', font = 'Verdana, 15')],
-                [sg.Text('Fields marked with an asterisk (*) are compulsory')],
-                [sg.Text('Username * :'),sg.Input(do_not_clear=False, key = 'u_name'),sg.Text('       ', key = 'name_check')],
-                [sg.Text('Password * :'),sg.Input(do_not_clear=False, key = 'pass', password_char='*')],
-                [sg.Text('Confirm Password * :'),sg.Input(do_not_clear=False, key = 'pass_conf', password_char='*'), sg.Text('        ', key = 'pass_check')],
-                [sg.Text('E-mail ID :'),sg.Input(do_not_clear=False, key = 'email')],
-                [sg.Text('First Name * :'),sg.Input(do_not_clear=False, key = 'fname')],
-                [sg.Text('Last Name * :'),sg.Input(do_not_clear=False, key = 'lname')],
-                [sg.Button('Cancel'), sg.Text(space1), sg.Button('Create account', button_color=('white','#008000'))]
-                ]
-signup = sg.Window('Signup').Layout(signup_layout)
+
 
 layout = [
           [sg.Text('Welcome to Xpnsit, the best way to manage your expenses! To begin, login or signup below.',font = ('Helvetica',15),justification='center')],
@@ -53,88 +48,131 @@ layout = [
 login_window = sg.Window('Xpnsit v0.1').Layout(layout)
 
 
+signup_layout = [
+                [sg.Text('Signup', justification='center', font='Verdana, 15')],
+                [sg.Text('Fields marked with an asterisk (*) are compulsory')],
+                [sg.Text('Username * :'), sg.Input(do_not_clear=False,
+                                                   key='u_name'), sg.Text('       ', key='name_check')],
+                [sg.Text('Password * :'), sg.Input(do_not_clear=False,
+                                                   key='pass', password_char='*')],
+                [sg.Text('Confirm Password * :'), sg.Input(do_not_clear=False,
+                                                           key='pass_conf', password_char='*'), sg.Text('        ', key='pass_check')],
+                [sg.Text('E-mail ID :'),
+                 sg.Input(do_not_clear=False, key='email')],
+                [sg.Text('First Name * :'),
+                 sg.Input(do_not_clear=False, key='fname')],
+                [sg.Text('Last Name * :'),
+                 sg.Input(do_not_clear=False, key='lname')],
+                [sg.Button('Cancel'), sg.Text(space1), sg.Button(
+                    'Create account', button_color=('white', '#008000'))]
+]
+signup = sg.Window('Signup').Layout(signup_layout)
+
 
 # Calling the login window and starting an event loop
 i = 0
 
 while True:
-    if not dash_active:
-        event, values = login_window.Read(timeout=100)
+    # if not dash_active or not signup_active:
+    event, values = login_window.Read(timeout=100)
 
-        if event is None or event == 'Exit':
-            break
-        if event != sg.TIMEOUT_KEY:
-            print(i, event, values)
+    if event is None or event == 'Exit':
+        break
+    if event != sg.TIMEOUT_KEY:
+        print(i, event, values)
+        
 
-    if event == 'Signup' and not dash_active:
-        # signup_active = True
-        while True:
-            signup.UnHide()
-            login_window.Hide()
-            try:
-                butt_event_signup, sign_details = signup.Read()
-                print(butt_event_signup, sign_details)
-            except:
-                continue
+    if event == 'Signup' and not signup_active:
+
+        signup_active = True
+        
+
+        # signup.UnHide()
+        # login_window.Hide()
+
+        while signup_active:
+            butt_event_signup, sign_details = signup.Read(timeout = 0)
+
             if butt_event_signup != sg.TIMEOUT_KEY:
-                print('Signup', butt_event_signup)
-            if butt_event_signup == 'Cancel' or butt_event_signup is None:
-                signup.Close()
-                login_window.UnHide()
+                print('Signup Event -->', butt_event_signup)
+                print(butt_event_signup, sign_details)
+
+            if butt_event_signup == 'Cancel':
+                # login_window.UnHide()
                 signup_active = False
-                break
+                signup.Close()
+                # break
+
+            if check_of_existence_of(sign_details['u_name']) is True:
+                signup.FindElement('name_check').Update('Available!')
+            else:
+                signup.FindElement('name_check').Update('Username taken already')
+            
             if butt_event_signup == 'Create account':
-                if check_of_existence_of(sign_details['u_name']) == 0:
-                    signup.FindElement('name_check').Update('Available!')
-                else:
-                    signup.FindElement('name_check').Update('Username taken already')
+                sign_dets = []
+                dets = ''
 
                 if sign_details['email'] == '':
                     sign_details['email'] = 'NULL'
-                else:
-                    pass
+                
+                correct_info = False
 
                 for (key, value) in sign_details.items():
-                    if value == '' and (key != 'email'):
-                        sg.PopupError('Please fill required fields')
+                    if value == '' and (key != 'email' or 'pass_conf'):
+                        correct_info = False
+                        error = 'incorrect_vals'
+                        break
+
                     elif key == 'pass_conf':
                         if value != sign_details['pass']:
-                            sg.PopupError("Passwords don't match")
+                            correct_info = False
+                            error = 'no_pass_match'
                             break
-                        else:
-                            pass
+                    else:
+                        correct_info = True
+                    print(sign_dets)
+                
+                if correct_info == True:
+                    for (key, value) in sign_details.items():
+                        if key not in ( 'pass_conf','name_check', 'pass_check'):
+                            sign_dets.append(value)
+                            if key != 'u_name':
+                                dets = dets + ',' + repr(value)
+                            else:
+                                dets += repr(value)
+                            print(dets)
 
-                sign_dets = []
-                dets = ''
-                for key, value in sign_details.items():
-                    if key != 'pass_conf':
-                        sign_dets.append(value)
-                        if key != 'lname' or 'u_name':
-                            dets = dets + ',' + repr(value)
-                        else:
-                            dets += repr(value)
-                        print(dets)
+                    query = f'insert into users {user_fields} values ({dets});'
+                    print(query)
+                    signup_cursor = conn.cursor()
+                    signup_cursor.execute(query)
+                    conn.commit()
 
-                        print(sign_dets)
-                query = f'insert into users {user_fields} values ({dets});'
-                print(query)
-                signup_cursor = conn.cursor()
-                signup_cursor.execute(query)
-                conn.commit()
-                if check_of_existence_of(sign_details['u_name']):
-                    lt = [
-                        [sg.Text('Signup Success!')],
-                        [sg.Button('Return to Login')]
-                    ]
-                    success = sg.Window('Success', lt)
-                    while True:
-                        s_eve , s_val = success.Read()
-                        if s_eve == 'Return to Login' or s_eve is None:
-                            success.Close()
-                            break
-            signup.Close()
-            login_window.UnHide()
-            break
+                    if check_of_existence_of(sign_details['u_name']):
+                        lt = [
+                            [sg.Text('Signup Success!')],
+                            [sg.Button('Return to Login')]
+                        ]
+                        success = sg.Window('Success', lt)
+                        while True:
+                            s_eve, s_val = success.Read()
+                            if s_eve == 'Return to Login' or s_eve is None:
+                                success.Close()
+                                signup.Hide()
+                                login_window.UnHide()
+                                signup_active = False
+                                break
+
+                elif correct_info == False and error == 'incorrect_vals':
+                    signup_active = False
+                    sg.PopupError('Please fill required fields')
+                    
+                elif correct_info == False and error == 'no_pass_match':
+                    signup_active = False
+                    sg.PopupError("Passwords don't match")
+                    
+            
+            # break
 
     if event == 'Login' and not dash_active:
         # dash_active = True
@@ -181,9 +219,9 @@ while True:
 # Event loop which corresponds to each button function
     if dash_active:
 
-        event, values = dashboard.Read()
+        dash_event, values = dashboard.Read()
 
-        if event != sg.TIMEOUT_KEY:
+        if dash_event != sg.TIMEOUT_KEY:
             print('Dashboard', event)
         # breakpoint()
         # imwatchingyou.refresh_debugger()
@@ -209,62 +247,68 @@ while True:
             new_trans = sg.Window('New Transaction', new_trans_layout)
 
     if newTransActive:
-        nt_event, nt_values = new_trans.Read(timeout=100)
+        while True:
+            nt_event, nt_values = new_trans.Read(timeout=2500)
 
-        print(nt_event, nt_values)
-        # imwatchingyou.refresh_debugger()
-        if nt_event is None or nt_event == 'Exit':
-            print('Exited from the New Transaction window')
-            newTransActive = False
-            dash_active = True
-            new_trans.Close()
-            dashboard.UnHide()
+            print(nt_event, nt_values)
+            # imwatchingyou.refresh_debugger()
+            if nt_event is None or nt_event == 'Exit':
+                print('Exited from the New Transaction window')
+                newTransActive = False
+                dash_active = True
+                new_trans.Close()
+                dashboard.UnHide()
 
-        if nt_event == 'Select Date':
-            # newTransActive = True
-            print(nt_values['_cal_'] )
-            ################################################# Dates: For verifying that the user hasn't put a date AHEAD of time##################################################
-
-            dated_date = nt_values['_cal_']
-            todays_date = datetime.date.today()
-
-            if dated_date < todays_date:
-                nt_values['_cal_'] = nt_values['_cal_'].isoformat()
+            if nt_event == 'Select Date':
+                # newTransActive = True
                 print(nt_values['_cal_'] )
+                ################################################# Dates: For verifying that the user hasn't put a date AHEAD of time##################################################
 
-                new_trans.FindElement('_OUTPUT_').Update(nt_values['_cal_'].strftime('%d-%m-&y'))
-            else:
-                sg.PopupError(f"Please enter valid date (Today's date : {todays_date})")
+                dated_date = nt_values['_cal_']
+                todays_date = datetime.date.today()
+                print(todays_date)
+                if dated_date < todays_date:
+                    nt_values['_cal_'] = nt_values['_cal_'].strftime()
+                    print(nt_values['_cal_'] )
 
-        elif nt_event == 'Submit':
-            # newTransActive = True
-            confirm = sg.PopupYesNo('Confirm Operation?', title='Confirmation')
-            confirm_win = sg.Window(confirm)
-            # c_active = True
-
-            try:
-                c_event , c_val = confirm_win.Read(timeout = 1000)
-            except:
-                continue
-
-            if c_event is None or c_event == 'No':
-                confirm.Close()
-            elif c_event == 'Yes':
-                amt = str(nt_values['whole']) + '.' + str(nt_values['deci'])
-                with current_user_details as cud:
-                    nt_cursor = conn.cursor()
-                    nt_cursor.execute(f"insert into transactions values ({cud[0][0]}, {cud[0][1]}, {nt_values.values()[0]}, {nt_values.values()[1]}, {amt} , {nt_values['_cal_'].strftime('%y-%m-%d')} );")
-                    conn.commit()
-                vals = (cud[0][0], cud[0][1], nt_values.values()[0], nt_values.values()[1], amt, nt_values['_cal_'].strftime('%y-%m-%d'))
-                temp_cursor = conn.cursor()
-                q = f"select * from transactions where user_id = {cud[0][1]};"
-                temp_cursor.execute(q)
-                if vals in temp_cursor.fetchall():
-                    sg.Popup('Operation Successful!')
-                    newTransActive = False
-                    new_trans.Close()
-                    break
+                    new_trans.FindElement('_OUTPUT_').Update(nt_values['_cal_'].strftime('%d-%m-&y'))
                 else:
-                    sg.PopupError('Operation Cancelled due to technical failure.','Please try again')
+                    error = 'invalid_date'
+                    sg.PopupError(f"Please enter valid date (Today's date : {todays_date})")
+
+            elif nt_event == 'Submit':
+                # newTransActive = True
+                confirm = sg.PopupYesNo('Confirm Operation?', title='Confirmation')
+                confirm_win = sg.Window(confirm)
+                # c_active = True
+
+                try:
+                    c_event , c_val = confirm_win.Read(timeout = 1000)
+                except:
+                    continue
+
+                if c_event is None or c_event == 'No':
+                    confirm.Close()
+                elif c_event == 'Yes':
+                    amt = str(nt_values['whole']) + '.' + str(nt_values['deci'])
+                    with current_user_details as cud:
+                        nt_cursor = conn.cursor()
+                        try:
+                            nt_cursor.execute(f"insert into transactions values ({cud[0][0]}, {cud[0][1]}, {nt_values.values()[0]}, {nt_values.values()[1]}, {amt} , {nt_values['_OUTPUT_']} );")
+                            conn.commit()
+                        except:
+                            print('Transaction not entered')
+                    vals = (cud[0][0], cud[0][1], nt_values.values()[0], nt_values.values()[1], amt, nt_values['_cal_'].strftime('%y-%m-%d'))
+                    temp_cursor = conn.cursor()
+                    q = f"select * from transactions where user_id = {cud[0][1]};"
+                    temp_cursor.execute(q)
+                    # conn.commit()
+                    if vals in temp_cursor.fetchall():
+                        sg.Popup('Operation Successful!')
+                        newTransActive = False
+                        new_trans.Close()
+                        break
+                    else:
+                        sg.PopupError('Operation Cancelled due to technical failure.','Please try again')
 
                     # c_active = False

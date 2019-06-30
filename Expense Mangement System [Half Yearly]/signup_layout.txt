@@ -1,0 +1,11 @@
+signup_layout = [
+                [sg.Text('Signup',justification='center', font = 'Verdana, 15')],
+                [sg.Text('Fields marked with an asterisk (*) are compulsory')],
+                [sg.Text('Username * :'),sg.Input(do_not_clear=False, key = 'u_name'),sg.Text('       ', key = 'name_check')],
+                [sg.Text('Password * :'),sg.Input(do_not_clear=False, key = 'pass', password_char='*')],
+                [sg.Text('Confirm Password * :'),sg.Input(do_not_clear=False, key = 'pass_conf', password_char='*'), sg.Text('        ', key = 'pass_check')],
+                [sg.Text('E-mail ID :'),sg.Input(do_not_clear=False, key = 'email')],
+                [sg.Text('First Name * :'),sg.Input(do_not_clear=False, key = 'fname')],
+                [sg.Text('Last Name * :'),sg.Input(do_not_clear=False, key = 'lname')],
+                [sg.Button('Cancel'), sg.Text(space1), sg.Button('Create account', button_color=('white','#008000'))]
+                ]
