@@ -3,15 +3,16 @@
 # from tkinter import *
 import mysql.connector as mysqlconnect
 
-dbcredentials = {'host': 'localhost', 'password': 'bIgnInja349', 'user': 'root', 'database': 'xpnsit'}
-conn = mysqlconnect.MySQLConnection(**dbcredentials)
+dbcredentials = {'host': 'localhost', 'password': 'bIgnInja349', 'user': 'root'}
+conn = mysqlconnect.connect(**dbcredentials)
 
 
 '''
 TODO: Create the database and required tables if they don't exist. This'll be required for systems other than my local one. 
 '''
-# db_connection_cursor = conn.cursor()
-# db_connection_cursor.execute('create database if not exists')
+db_connection_cursor = conn.cursor()
+db_connection_cursor.execute('create database if not exists xpnsit')
+db_connection_cursor.execute('use xpnsit')
 
 
 
