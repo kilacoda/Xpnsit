@@ -1,7 +1,8 @@
 from __init__ import *
 from login import login_cursor
 import PySimpleGUI as sg
-from datetime import datetime
+import datetime
+import matplotlib.pyplot as plt
 '''
  NOTE (25-06-2019; 00:30): Use the layout from the multi_window.py file and modify it to the application's requirement. The thing is, that's working.
  And I think one of the major causes for my crashes is that I just haven't implemented it properly (e.g. the timeouts for the second ('Signup') window and the active flags). So, I'll try to get this up and running in about a week or so, if I'm lucky. Wish me luck! Also, don't worry, Raghav, it'll work eventually, and you're going to be smashing others projects in the face in the end. Believe in yourself. I'll go to sleep now, its 00:40. I'll have another go at this in the morning.
@@ -10,6 +11,19 @@ from datetime import datetime
 '''
 TODO (29/06/2019 19:46): Divide the dashboard and signup sections into seperate functions and call them in the main event loop.
 '''
+
+
+def strike(text):
+    result = ''
+    for c in text:
+         result = result + c + '\u0336'
+    return result
+
+seven_july = '7th July'
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Function to check existance of a username, could be expanded for other values as well.#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def check_of_existence_of(username):
     name_check = conn.cursor()
@@ -20,28 +34,38 @@ def check_of_existence_of(username):
         return True
 
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Sort of debugging tool to find the status of the windows. #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 def show_status_of(var):
     if var is signup_active:
         print(f"Signup Active = {signup_active}")
     elif var is dash_active:
         print(f"Dashboard Active = {dash_a}")
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Function to update the table, used in 'Transaction History' only. #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def update_table(_query):
-    if h_event is not None or h_event != 'Exit':
         try:
             hist_cursor.execute(_query)
             history.Element('table').Update(hist_cursor.fetchall())
             history.Refresh()
         except :
             print('Looks like you can\'t do something like this')
-                
+    
 user_fields = '(username,passwd,email_id,first_name,last_name)'
 # login_window = sg.Window('Xpnsit v0.1')
 
 # Tabs so that I could justify the fields and buttons
 space1 = '                                   '
 space2 = '                                                                                       '
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Window states -> A check that's been applied so two instances of the same window don't occur. #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 newTransActive = False
 notebookActive = False
@@ -50,8 +74,20 @@ historyActive = False
 dash_active = False
 signup_active = False
 
-####################################################### Login Area #################################################################
+# # # # # # # #
+# Handy dates #
+# # # # # # # #
 
+today_date = str(datetime.date.today())
+year = int(today_date[0:4])
+month = int(today_date[5:7])
+day = int(today_date[9:])
+
+sg.ChangeLookAndFeel('NeutralBlue')
+
+# # # # # # # # # # # # # # # # # # # #
+#             LOGIN AREA              #
+# # # # # # # # # # # # # # # # # # # #
 
 layout = [
     [sg.Text('Welcome to Xpnsit, the best way to manage your expenses! To begin, login or signup below.', font=(
@@ -257,7 +293,7 @@ while True:
         dash_event, values = dashboard.Read()
 
         if dash_event != sg.TIMEOUT_KEY:
-            print('Dashboard', event)
+            print('Dashboard', dash_event)
        
         if dash_event == 'Exit' or dash_event is None:
             dash_active = False
@@ -275,10 +311,10 @@ while True:
             new_trans_layout = [
                 [sg.Text(space1), sg.Txt("New Transaction")],
                 [sg.T('')],
-                [sg.Text('Name/Particulars'), sg.Input()],
-                [sg.Text('Amount'), sg.Input(do_not_clear=True, default_text='0', size=(10, 2), key='whole'), sg.T('.'), sg.Input(do_not_clear=True, default_text='00', size=(10, 2), key='deci')],
-                [sg.Text('Type'), sg.InputCombo(['Income', 'Expense'],key = 'type')],
-                [sg.Text('Date of Transaction'), sg.CalendarButton(button_text="Select Date", target='date',format='%Y-%m-%d'), sg.InputText("Or enter date here",size = (15,1), key='date')],
+                [sg.Text('Name/Particulars:'), sg.Input()],
+                [sg.Text('Amount:'), sg.Input(do_not_clear=True, default_text='0', size=(10, 2), key='whole'), sg.T('.'), sg.Input(do_not_clear=True, default_text='00', size=(10, 2), key='deci')],
+                [sg.Text('Type:'), sg.InputCombo(['Income', 'Expense'],key = 'type',readonly = True)],
+                [sg.Text('Date of Transaction:'), sg.CalendarButton(button_text=None, target='date', format='%Y-%m-%d', default_date_m_d_y=(month, day,year), key='calendar',image_filename='C:\\PyProjects\\Python\\git\\Xpnsit\\Expense Mangement System [Half Yearly]\\calendar1.png', image_size=(25, 20)), sg.Text("       ", size=(15, 1), key='date')],
                 [sg.Button("Enter"), sg.T('                     '), sg.Button('Exit')]
             ]
 
@@ -289,14 +325,14 @@ while True:
         ############
 
         elif not notebookActive and dash_event == 'Notebook':
-            sg.Popup('Under construction!','Deadline 7th July')
+            sg.Popup('Under construction!','Deadline '+ strike(seven_july))
 
         #############
         # Analytics :-
         #############
 
         elif not analyticsActive and dash_event == 'Analytics':
-            sg.Popup('Under construction!', 'Deadline 7th July')
+            sg.Popup('Under construction!', 'Deadline ' + strike(seven_july))
 
         #######################
         # Transaction History:-
@@ -312,20 +348,23 @@ while True:
             hist_query = "select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by particulars desc;"
             hist_cursor.execute(hist_query)
             history_values = hist_cursor.fetchall()
-            headings = ['Particulars','Type','Amount','Date'] 
+            headings = ['Particulars','Type','Amount','Date']
+            rec_no = len(history_values)
             
             ##right_click_menu = ['Delete','Modify']
             
             hist_lt = [
-                [sg.T('Transaction History',size = (15,1)), sg.T(space1),sg.T('Sort By:'),sg.Combo(['Name', 'Date', 'Amount','Type'],auto_size_text = True,enable_events = True,key = 'sort',change_submits = True)],
+                [sg.T('Transaction History', font=("Helvetica", 25)), sg.T(space1), sg.T('Sort By:'), sg.Combo(['Name', 'Date', 'Amount', 'Type'], size=(
+                    10, 1), auto_size_text=False, enable_events=True, key='sort', change_submits=True, readonly=True)],
+                [sg.T('Number of records to be shown:'),sg.Slider(range=(0, len(history_values)), default_value = rec_no, orientation = 'h',enable_events =True,key = 'rec_slider')],
                 [sg.Table(history_values,headings = headings,enable_events = True,key = 'table')],
-                [sg.Button('Exit'),sg.Button('Refresh')]
+                [sg.Button('Back')]
             ]
             
             history = sg.Window('Transaction History',hist_lt)
     
     #############################
-    # New/Manage Transaction(s):-
+    # New/Manage Transaction(s):-   (Layout on line 280 or somewhere around there)
     #############################
     if newTransActive:
         nt_event, nt_values = new_trans.Read()
@@ -338,26 +377,32 @@ while True:
             new_trans.Close()
             dashboard.UnHide()
 
-        if nt_event == 'Select Date':
-            # newTransActive = True
+        
+        # newTransActive = True
+        if 'date' in nt_values.keys():
             print(nt_values['date'])
-            ################################################# Dates: For verifying that the user hasn't put a date AHEAD of time##################################################
+        else:
+            continue
 
-            dated_date = nt_values['date']
-            todays_date = datetime.date.today()
-            print(todays_date)
-            if dated_date < todays_date:
-                nt_values['date'] = nt_values['date'].strftime()
-                print(nt_values['date'])
+        ######################################################################
+        # Dates: For verifying that the user hasn't put a date AHEAD of time #
+        ######################################################################
+        
+        dated_date = repr(nt_values['date'])
+        todays_date = repr(datetime.date.today())
+        print(todays_date)
+        if dated_date < todays_date:
+            # nt_values['date'] = nt_values['date'].strftime()
 
-                new_trans.FindElement('_OUTPUT_').Update(
-                    nt_values['date'].strftime('%d-%m-&y'))
-            else:
-                error = 'invalid_date'
-                sg.PopupError(
-                    f"Please enter valid date (Today's date : {todays_date})")
-        
-        
+            new_trans.FindElement('date').Update(
+                nt_values['date'].strftime('%d-%m-&y'))
+            print(nt_values['date'])
+        elif dated_date > todays_date:
+            error = 'invalid_date'
+            sg.PopupError(
+                f"Please enter valid date (Today's date : {todays_date})")
+    
+    
         if nt_values['type'] == 'Income':
             # nt_values['type'] = 'CR'
             exp_type = 'CR'
@@ -377,7 +422,7 @@ while True:
                 sg.PopupError('Transaction not entered')
             
             conn.commit()
-            vals = (cud[0][1], trans_vals[0], dict(exp_type), float(amt))
+            vals = (cud[0][1], trans_vals[0], exp_type, float(amt))
             print(vals)
             temp_cursor = conn.cursor()
             query1 = f"select username,particulars,exp_type,amount from transactions where user_id = {cud[0][0]};"
@@ -400,33 +445,38 @@ while True:
     if historyActive:
 
         h_event, h_vals = history.Read()
+        try:
+            new_rec_no = int(h_vals['rec_slider'])
+        except:
+            pass
         if h_event != sg.TIMEOUT_KEY:
             print(h_event,h_vals)
-        if h_event is None or h_event == 'Exit':
+        if h_event is None or h_event == 'Back':
             print('Exited from the Transaction History window')
             historyActive = False
             dash_active = True
             history.Close()
             dashboard.UnHide()
-            
-        if h_vals is not None:
+        
+
+        elif h_event is not None or h_event != 'Back' and h_event == 'sort':
             if h_vals['sort'] == 'Name':
-                hist_query = "select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by particulars desc;"
+                hist_query = f"select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by particulars desc limit {new_rec_no};"
 
                 update_table(hist_query)
 
             elif h_vals['sort'] == 'Amount':
-                hist_query = "select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by amount desc;"
+                hist_query = f"select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by amount desc limit {new_rec_no};"
                 update_table(hist_query)
 
             elif h_vals['sort'] == 'Date':
-                hist_query = "select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by exp_date desc;"
+                hist_query = f"select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by exp_date desc limit {new_rec_no};"
                 
                 update_table(hist_query)
 
 
             elif h_vals['sort'] == 'Type':
-               hist_query = "select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by exp_type desc;"
+               hist_query = f"select particulars,exp_type,amount,exp_date from transactions where user_id = 2 order by exp_type desc limit {new_rec_no} ;"
                update_table(hist_query)
                
 
