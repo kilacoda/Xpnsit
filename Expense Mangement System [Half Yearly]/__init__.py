@@ -18,11 +18,12 @@ db_connection_cursor.execute("""CREATE TABLE IF NOT EXISTS transactions(
     user_id int(5) NOT NULL,
     username varchar(35),
     particulars varchar(512),
-    exp_type set('CR','DR')
+    exp_type set('CR','DR'),
     amount double,
     exp_date date
-);
-CREATE TABLE IF NOT EXISTS users(
+);""")
+db_connection_cursor.execute(
+"""CREATE TABLE IF NOT EXISTS users(
     user_id int(5) PRIMARY KEY AUTO_INCREMENT,
     username varchar(35),
     passwd varchar(40),
