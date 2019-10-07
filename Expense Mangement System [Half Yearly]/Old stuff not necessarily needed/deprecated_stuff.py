@@ -10,22 +10,22 @@
 #     confirm.Close()
 # elif c_event == 'Yes':
 
-import PySimpleGUI as sg
+# import PySimpleGUI as sg
 
-vals = [[1,2,3]]
-heads = ['a','b','c']
-lt = [
-    [sg.Text('Does this work?')],
-    [sg.Table(vals,heads,auto_size_columns = False)]
-]
-window = sg.Window('Tables', resizable = True).Layout(lt)
-while True:
-    print(window.Read())
+# vals = [[1,2,3]]
+# heads = ['a','b','c']
+# lt = [
+#     [sg.Text('Does this work?')],
+#     [sg.Slider(range = (0,100))]
+# ]
+# window = sg.Window('Slider', resizable = True).Layout(lt)
+# while True:
+#     print(window.Read())
 
-    event,values = window.Read()
-    print(event,values)
-    if event is None:
-        break
+#     event,values = window.Read()
+#     print(event,values)
+#     if event is None:
+#         break
 
 # #!/usr/bin/env python
 # import sys
@@ -86,15 +86,62 @@ while True:
 
 # window.Read()
 
+# import PySimpleGUI as sg
+
+# # Button colours
+# statecolor = ['lightgray', 'tan', 'yellow', 'lightblue',
+#               'orange', 'limegreen', 'pink', 'red', 'darkgray']
+
+# # Initialise state for button
+# buttonstate = 0
+
+# layout = [[sg.Button('0', button_color=('black', statecolor[0]), key='0')]
+#           ]
+
+# window = sg.Window('GUI Test', location=(0, 0), size=(480, 288), default_button_element_size=(
+#     12, 6), auto_size_buttons=False, grab_anywhere=False).Layout(layout)
+
+# while True:
+
+#     # using timeout = 0 to make it non-blocking
+#     event, values = window.Read(timeout=0)
+#     if event != sg.TIMEOUT_KEY:
+#         print(event,values)
+
+#     if event is None:  # if the TitleBar X button is clicked, just exit
+#         break
+
+#     if event in '01234567':
+
+#         # step button state and update button colour
+#         buttonstate = buttonstate + 1
+#         window.FindElement(event).Update(
+#             button_color=('black', statecolor[buttonstate]))
+
+# window.Close()
 
 
+import PySimpleGUIWx as sg
+matrix = [[str(x * y) for x in range(5)] for y in range(10)]
+header = ["one", "two", "three", "four", "five"]
+Table = sg.Table(values=matrix, key="_table1_", headings=header,)
+layout = [[sg.Text("Table")], [Table], [
+    sg.Button("refresh")], [sg.Button("Exit")]]
+window = (
+    sg.Window("Table", default_element_size=(20, 22),
+              resizable=False).Layout(layout).Finalize()
+)
 
+while True:
 
-
-
-
-
-
+        event, values = window.Read()
+        if event is None or event == "Exit":
+            break
+        elif event == "refresh":
+            matrix[0][1] = "10000"
+            window.FindElement("_table1_").Update(matrix)
+        print(event, values)
+window.Close()
 
 
 
