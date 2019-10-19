@@ -267,21 +267,21 @@ while True:
         if dash_event != sg.TIMEOUT_KEY:
             print('Dashboard', dash_event)
        
-        """
-         _                            _       
-        | |    __ _ _   _  ___  _   _| |_ ___ 
-        | |   / _` | | | |/ _ \| | | | __/ __|
-        | |__| (_| | |_| | (_) | |_| | |_\__ |
-        |_____\__,_|\__, |\___/ \__,_|\__|___/
-                    |___/                     
-        """
-
-
         if dash_event in ('Exit', 'Log Out', None):
             dash_active = False
             dashboard.Close()
             login_window.UnHide()
             login_window.Refresh()
+        
+
+        """
+         _                            _       
+        | |    __ _ _   _  ___  _   _| |_ ___ 
+        | |   / _` | | | |/ _ \| | | | __/ __|
+        | |__| (_| | |_| | (_) | |_| | |_\__ \
+        |_____\__,_|\__, |\___/ \__,_|\__|___/
+                    |___/                     
+        """
         
         #############################
         # New/Manage Transaction(s):-
