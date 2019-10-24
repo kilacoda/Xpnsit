@@ -1,7 +1,15 @@
+# <------------------------ Imports ------------------------------> #
+
 from __init__ import conn, start_connection
 from funcs import *
-import PySimpleGUI as sg
-from PySimpleGUI import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab
+import sys
+if sys.version >= "3.0.0": #PySimpleGUI
+    import PySimpleGUI as sg
+    from PySimpleGUI import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab
+else:
+    import PySimpleGUI27 as sg
+    from PySimpleGUI27 import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab
+
 import datetime
 import matplotlib.pyplot as plt
 import csv
@@ -35,6 +43,9 @@ months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
  | |  | | |_| |___) | |_| | |___
  |_|  |_|\__, |____/ \__\_\_____|
          |___/
+
+Here below lie all the MySQL related functions. Queries, connectivity (actually in __init__.py), cursors, 
+everything's here.
 '''
 
 start_connection()  # Starts MySQL Database
@@ -55,7 +66,7 @@ def check_login_info(User: str, Pass: str) -> bool:
             return True
 
         else:
-            False
+             return False
 
     except ConnectionError:
         Popup("Error Connecting to Database.",
@@ -104,7 +115,7 @@ def get_income_and_expense(user: str) -> Tuple[float, float]:
         AND exp_type = 'CR';""")
 
     try:
-        income = cursor.fetchone()[0][0]
+        income = cursor.fetchone()[0]
     except TypeError:
         print("No records found. Setting income to None")
         income = None
@@ -118,7 +129,10 @@ def get_income_and_expense(user: str) -> Tuple[float, float]:
         AND username = '{user}';""")
 
     try:
-        expense = cursor.fetchone()[0][0]
+        expense = cursor.fetchone()[0]
+        if expense == None:
+            expense = 0
+
     except TypeError:
         print("No records found. Setting expense to None")
         expense = None
@@ -132,7 +146,7 @@ def get_user_details(user: str) -> List[str]:
     cursor = conn.cursor()
 
     cursor.execute(f"""
-    SELECT username,passwd,email_id,first_name,last_name
+    SELECT user_id,username,passwd,email_id,first_name,last_name
     FROM users
     WHERE username = '{user}';
     """)
@@ -160,6 +174,18 @@ def username_used(user: str) -> bool:
         return True
 
 
+def get_transactions(user: Union[str,int]) -> List[Tuple]:
+    cursor = conn.cursor()
+
+    cursor.execute(f"""
+    SELECT particulars,exp_type,amount,exp_date
+    FROM transactions
+    WHERE username = '{user}' OR user_id = {user};
+    """)
+
+    transactions : List[Tuple] = cursor.fetchall()
+    
+    return transactions
 # <----------------------- GUI -----------------------------> #
 
 #   ________  ___  ___  ___
@@ -170,6 +196,15 @@ def username_used(user: str) -> bool:
 #     \ \_______\ \_______\ \__\
 #      \|_______|\|_______|\|__|
 
+'''
+Why am I using a class to store all my GUI functions? 
+
+-> So that I could use locally created values like vals and user_details within other functions
+   and to prevent me from getting a headache while managing scopes.
+
+No, seriously though, making an object really helps while handling local objects as globals, making the programming
+enjoyable and painless.
+'''
 
 class Xpnsit:
     def Login(self):
@@ -198,6 +233,7 @@ class Xpnsit:
                     self.user = values["user"]
                     login_active = False
                     # dash_active = True
+                    win.close()
                     self.Interface()
 
             if event == "Signup":
@@ -299,12 +335,16 @@ class Xpnsit:
                     Tab("Analysis", self.Analysis(
                     ), tooltip="Get a graphical insight to your spendings.", font=("Arial", 12))
                 ]
-            ])]
+            ],)]
         ]
 
-        win = Window("Xpnsit v1.0", layout=layout)
+        win = Window("Xpnsit v1.0", layout=layout,size=(400,400))
         while True:
-            events,values = win.Read()
+            event,values = win.Read()
+            if event in (None,'Exit'):
+                win.close()
+                break
+            
             
 
 
