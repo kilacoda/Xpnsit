@@ -1,20 +1,28 @@
-## Goal : To create a working personal expense management system using MySQL and Python
-## See README.txt for more project details.
+# Goal : To create a working personal expense management system using MySQL and Python
+# See README.txt for more project details.
 # from tkinter import *
 import mysql.connector as mysqlconnect
 
-dbcredentials = {'host': 'localhost', 'password': 'bIgnInja349', 'user': 'root'}
+dbcredentials = {'host': 'localhost',
+                 'password': 'bIgnInja349', 'user': 'root'}
+
 conn = mysqlconnect.connect(**dbcredentials)
 
 
 '''
-TODO: Create the database and required tables if they don't exist. This'll be required for systems other than my local one. 
+TODO: Create the database and required tables if they don't exist. This'll be required for systems other than my local one. (Update -> Done)
 '''
 db_connection_cursor = conn.cursor()
+
+
 def start_connection():
+    # <----------------- Database Creation ----------------------> #
     db_connection_cursor.execute('CREATE DATABASE IF NOT EXISTS xpnsit;')
     db_connection_cursor.execute('USE xpnsit')
-    db_connection_cursor.execute("""CREATE TABLE IF NOT EXISTS transactions(
+
+    # <----------------- Create Transactions Table ----------------> #
+    db_connection_cursor.execute(
+        """CREATE TABLE IF NOT EXISTS transactions(
         trans_id int(11) PRIMARY KEY AUTO_INCREMENT,
         user_id int(5) NOT NULL,
         username varchar(35),
@@ -23,8 +31,10 @@ def start_connection():
         amount double,
         exp_date date
     );""")
+
+    # <----------------- Create Users Table ----------------> #
     db_connection_cursor.execute(
-    """CREATE TABLE IF NOT EXISTS users(
+        """CREATE TABLE IF NOT EXISTS users(
         user_id int(5) PRIMARY KEY AUTO_INCREMENT,
         username varchar(35),
         passwd varchar(40),
@@ -33,35 +43,7 @@ def start_connection():
         last_name tinytext
     );""")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# <------------------- OLD SYSTEM OF LOGIN (NOT USED) ----------------------> #
 
 # import random
 # import getpass
@@ -71,7 +53,6 @@ def start_connection():
 # import stdiomask
 # from tkinter import ttk
 # import tkinter
-
 
 
 # maindb = mysql.connector.connect(
