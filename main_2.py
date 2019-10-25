@@ -1,19 +1,20 @@
 # <------------------------ Imports ------------------------------> #
 
+from typing import *
+import csv
+import matplotlib.pyplot as plt
+import datetime
 from __init__ import conn, start_connection
 from funcs import *
 import sys
-if sys.version >= "3.0.0": #PySimpleGUI
+
+if sys.version >= "3.0.0":  # PySimpleGUI
     import PySimpleGUI as sg
-    from PySimpleGUI import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab
+    from PySimpleGUI import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab, Multiline, Combo, CalendarButton, Table
 else:
     import PySimpleGUI27 as sg
-    from PySimpleGUI27 import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab
+    from PySimpleGUI27 import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab, Multiline, Combo, CalendarButton, Table
 
-import datetime
-import matplotlib.pyplot as plt
-import csv
-from typing import *
 # <------------------------- Useful Stuff ---------------------------------> #
 
 tooltips = [
@@ -31,6 +32,7 @@ heading_format = {
 
 year = datetime.datetime.now().year
 month = datetime.datetime.now().month
+day = datetime.datetime.now().day
 months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -44,8 +46,8 @@ months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
  |_|  |_|\__, |____/ \__\_\_____|
          |___/
 
-Here below lie all the MySQL related functions. Queries, connectivity (actually in __init__.py), cursors, 
-everything's here.
+Here below lie all the MySQL related functions. 
+Queries, connectivity (actually in __init__.py, though), cursors, everything's here.
 '''
 
 start_connection()  # Starts MySQL Database
@@ -66,7 +68,7 @@ def check_login_info(User: str, Pass: str) -> bool:
             return True
 
         else:
-             return False
+            return False
 
     except ConnectionError:
         Popup("Error Connecting to Database.",
@@ -151,7 +153,7 @@ def get_user_details(user: str) -> List[str]:
     WHERE username = '{user}';
     """)
 
-    user_details = cursor.fetchall()
+    user_details = cursor.fetchall()[0]
 
     cursor.close()
 
@@ -174,18 +176,55 @@ def username_used(user: str) -> bool:
         return True
 
 
-def get_transactions(user: Union[str,int]) -> List[Tuple]:
+def get_transactions(user: Union[str, int], 
+                     n: int = 10000, 
+                     start_date: str = f"{year}-{month}-1", 
+                     end_date: str = f"{year}-{month}-{day}", 
+                     asc_or_desc: str = "ASC", 
+                     orderer: str = "particulars") -> List[Tuple]:
+    headings = [
+        "Particulars",
+        "Type",
+        "Amount",
+        "Date"
+    ]
+
     cursor = conn.cursor()
-
-    cursor.execute(f"""
-    SELECT particulars,exp_type,amount,exp_date
+    query = f"""
+    SELECT COUNT(*)
     FROM transactions
-    WHERE username = '{user}' OR user_id = {user};
-    """)
+    WHERE
+    """
+    where_clause = f"username = '{user}'" if type(user) is str else f"user_id = {user}"
+    query += where_clause
+    cursor.execute(query)
 
-    transactions : List[Tuple] = cursor.fetchall()
-    
-    return transactions
+    number_of_records = cursor.fetchone()[0]
+
+    cursor.reset()
+
+    query = f"""
+        SELECT particulars,exp_type,amount,exp_date
+        FROM transactions
+        WHERE {where_clause}
+        AND
+        exp_date BETWEEN '{start_date}' AND '{end_date}'
+        ORDER BY {orderer} {asc_or_desc}
+        """
+
+    if number_of_records < n:
+        limit = f" LIMIT {number_of_records};"
+    else:
+        limit = f" LIMIT {n};"
+
+    cursor.execute(query+limit)
+
+    transactions: List[Tuple] = cursor.fetchall()
+
+    trans_table = Table(transactions, headings, key="table") if number_of_records != 0 else T("No records to display")
+
+    return transactions,trans_table,number_of_records
+
 # <----------------------- GUI -----------------------------> #
 
 #   ________  ___  ___  ___
@@ -195,6 +234,7 @@ def get_transactions(user: Union[str,int]) -> List[Tuple]:
 #    \ \  \|\  \ \  \\\  \ \  \
 #     \ \_______\ \_______\ \__\
 #      \|_______|\|_______|\|__|
+
 
 '''
 Why am I using a class to store all my GUI functions? 
@@ -206,7 +246,87 @@ No, seriously though, making an object really helps while handling local objects
 enjoyable and painless.
 '''
 
+
 class Xpnsit:
+    # <------------------- Misc. Functions (Layouts and Updaters and stuff) --------------------> #
+    def Add_Trans(self, particulars: str, _type: str, amount: float, date: str):
+        cursor = conn.cursor()
+
+        cursor.execute(f"""
+        INSERT INTO transactions (
+            user_id,
+            username,
+            particulars,
+            exp_type,
+            amount,
+            exp_date
+        )
+        VALUES (
+            {self.user_details[0]},
+            {self.user_details[1]},
+            '{particulars}',
+            '{_type}',
+            {amount},
+            "{date}"
+            );
+        """)
+
+        conn.commit()
+
+        cursor.close()
+
+    def Create_Add_Trans_Layout(self):
+        layout = [
+            [T("New Transaction", font=("Helvetica", 18))],
+            [T("NOTE:", font=("Helvetica", 20)), T(
+                "All fields are required to be filled.")],
+            [T("Particulars:"), Multiline("Enter details of transaction",
+                                          autoscroll=True, key="Particulars")],
+            [T("Transaction type:"), Combo(["Select", "Credit", "Debit"],
+                                           "Select", readonly=True, key="new_type")],
+            [T("Amount:"), Input(enable_events=True)],
+            [T("Date Of Transaction:"), Input("YYYY-MM-DD or use the button on the right",
+                                              key="date"), CalendarButton("Select Date", target="date")],
+            [Submit()]
+        ]
+
+        return layout
+
+    def History(self):
+        history_values,table, no_of_records = get_transactions(self.user)
+
+        layout = [
+            [T("Transaction History", font=("Helvetica", 18))],
+            [T("All your transactions, in one place. Right click any one to delete or edit it.")],
+            [sg.T('Number of records to be shown:'),
+             sg.Slider(
+                 range=(0, no_of_records),
+                 default_value=no_of_records,
+                 orientation='h',
+                 enable_events=True,
+                 key='slider'
+            )
+            ],
+            [T("Show records from "),
+             Input("", key="start_date",size=(10,1)),
+             CalendarButton("Start date", target="start_date", default_date_m_d_y=(
+                 month, 1, year), button_color=("white","green"), format="%d-%m-%Y"),
+             T("to"),
+             Input("", key="end_date", size=(10, 1)),
+             CalendarButton("End date", target="end_date", default_date_m_d_y=(
+                 month, day, year), button_color=("white","red"), format="%d-%m-%Y")
+             ],
+            [T("Type:"), Combo(["All", "Credit", "Debit"],
+                               default_value="All", key="used_type")],
+            [T("Sort by:"), Combo(["None", "Name", "Amount"],
+                                  default_value="None", key="sort_by")],
+            [table]
+
+        ]
+        
+        return layout
+    # <------------------ Main Screens --------------------> #
+
     def Login(self):
         login_active = True
         layout = [
@@ -231,10 +351,12 @@ class Xpnsit:
                 if success == True:
                     print("Login Successful.")
                     self.user = values["user"]
-                    login_active = False
+                    self.user_details = get_user_details(self.user)
                     # dash_active = True
                     win.close()
                     self.Interface()
+                    login_active = False
+
 
             if event == "Signup":
                 self.Signup()
@@ -285,17 +407,17 @@ class Xpnsit:
 
     def Dashboard(self):
         income, expenses = get_income_and_expense(self.user)
-        self.user_details = get_user_details(self.user)
 
         if (income, expenses) == (None, None):
             dash_layout = [
-                [T(f"Welcome {self.user_details[0][3]}")],
-                [T("Looks like you have no transactions!\nGo add one in the Transactions tab.",justification="center")],
+                [T(f"Welcome {self.user_details[4]}")],
+                [T("Looks like you have no transactions!\nGo add one in the Transactions tab.",
+                   justification="center")],
                 [T("-"*40, text_color="gray")],
             ]
         else:
             dash_layout = [
-                [T(f"Welcome {self.user_details[0][3]}")],
+                [T(f"Welcome {self.user_details[4]}")],
                 [T(f"Your expenses for {months[month]}-{year} are:"),
                  T(str(expenses), font=("Arial", 20))],
                 [T(f"Your income for {months[month]}-{year} is:"),
@@ -311,7 +433,13 @@ class Xpnsit:
 
     def Transactions(self):
         transaction_layout = [
-            [T("Under Construction!")]
+            [T("Transactions", font=("Helvetica", 18))],
+            [TabGroup(
+                [
+                    [Tab("New Transaction", self.Create_Add_Trans_Layout())],
+                    [Tab("History", self.History())]
+                ]
+            )]
         ]
 
         return transaction_layout
@@ -338,14 +466,12 @@ class Xpnsit:
             ],)]
         ]
 
-        win = Window("Xpnsit v1.0", layout=layout,size=(400,400))
+        win = Window("Xpnsit v1.0", layout=layout, size=(1020, 720))
         while True:
-            event,values = win.Read()
-            if event in (None,'Exit'):
+            event, values = win.Read()
+            if event in (None, 'Exit'):
                 win.close()
                 break
-            
-            
 
 
 # <---------- MAIN: Calls an instance of the Xpnsit class and starts off with the Login page --------> #
