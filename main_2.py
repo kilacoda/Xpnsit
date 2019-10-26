@@ -10,10 +10,10 @@ import sys
 
 if sys.version >= "3.0.0":  # PySimpleGUI
     import PySimpleGUI as sg
-    from PySimpleGUI import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab, Multiline, Combo, CalendarButton, Table
+    from PySimpleGUI import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab, Multiline, Combo, CalendarButton, Table,PopupYesNo
 else:
     import PySimpleGUI27 as sg
-    from PySimpleGUI27 import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab, Multiline, Combo, CalendarButton, Table
+    from PySimpleGUI27 import Window, T, Input, Button, Popup, PopupError, Submit, TabGroup, Tab, Multiline, Combo, CalendarButton, Table,PopupYesNo
 
 # <------------------------- Useful Stuff ---------------------------------> #
 
@@ -27,7 +27,7 @@ tooltips = [
 heading_format = {
     "justification": 'center',
     "size":  (10, 1),
-    "font":  "Segoe"
+    "font":  ("Segoe",20)
 }
 
 year = datetime.datetime.now().year
@@ -221,7 +221,7 @@ def get_transactions(user: Union[str, int],
 
     transactions: List[Tuple] = cursor.fetchall()
 
-    trans_table = Table(transactions, headings, key="table") if number_of_records != 0 else T("No records to display")
+    trans_table = Table(transactions, headings, key="table",right_click_menu=["Options",["Edit","Delete"]],enable_events=True) if number_of_records != 0 else T("No records to display")
 
     return transactions,trans_table,number_of_records
 
@@ -286,7 +286,7 @@ class Xpnsit:
                                            "Select", readonly=True, key="new_type")],
             [T("Amount:"), Input(enable_events=True)],
             [T("Date Of Transaction:"), Input("YYYY-MM-DD or use the button on the right",
-                                              key="date"), CalendarButton("Select Date", target="date")],
+                                              key="date"), CalendarButton("Select Date", target="date",format="%Y-%m-%d")],
             [Submit()]
         ]
 
@@ -453,7 +453,7 @@ class Xpnsit:
 
     def Interface(self):
         layout = [
-            [T("Xpnsit", **heading_format)],
+            [T("Xpnsit", **heading_format),T(" "*50),Button("Settings"),Button("Log Out", button_color=("black","yellow"))],
             [TabGroup([
                 [
                     Tab("Dashboard", self.Dashboard(
@@ -466,13 +466,23 @@ class Xpnsit:
             ],)]
         ]
 
-        win = Window("Xpnsit v1.0", layout=layout, size=(1020, 720))
+        win = Window("Xpnsit v1.0", layout=layout)
         while True:
             event, values = win.Read()
             if event in (None, 'Exit'):
                 win.close()
                 break
-
+            if event != sg.TIMEOUT_KEY:
+                print(f"Event = {event}\nValues = {values}")
+            if event == "Log Out":
+                logout = PopupYesNo("Are you sure?")
+                if logout == 'Yes':
+                    sg.popup_quick_message("Okay, closing. Bye")
+                    win.close()
+                    del win
+                    break
+                    self.Login()
+                    
 
 # <---------- MAIN: Calls an instance of the Xpnsit class and starts off with the Login page --------> #
 if __name__ == "__main__":
